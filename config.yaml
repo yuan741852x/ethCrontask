@@ -1,0 +1,24 @@
+# Redis
+redis:
+  host: "192.168.101.52"
+  port: 6379
+  password: 'jhkdjhkjdhsIUTYURTU_d84mAW'
+
+mysql:
+  host: "192.168.101.52"
+  port: 3306
+  user: 'root'
+  password: 'admin123123'
+  db: 'swbitcash'
+
+ethBlock: 'ETH_BLOCK'
+ethBlockList: 'ETH_BLOCK_LIST'
+
+# 以太坊地址
+ethUrl: 'https://cloudflare-eth.com'
+# 钱包池
+WalletPools: 'ETH_WALLET_POOLS'
+# 匹配成功的区块信息
+MatchedBlocks: 'MATCHED_BLOCKS'
+# 订单状态
+order_state: "ORDER_STATE"
