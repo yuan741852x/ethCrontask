@@ -16,65 +16,67 @@ func Init() {
 			return
 		}
 		for _, s2 := range result {
-			btcOrder := consumer.EthOrder{}
-			err := json.Unmarshal([]byte(s2), &btcOrder)
+			ethOrder := consumer.EthOrder{}
+			err := json.Unmarshal([]byte(s2), &ethOrder)
 			if err != nil {
 				return
 			}
-			if btcOrder.State == 0 && (btcOrder.CreateTime+(10*60)) < time.Now().Unix() {
-				btcOrder.State = 9
-				btcOrder.UpdateTime = time.Now().Unix()
-				err := global.Db.Model(&consumer.EthOrder{}).Where("order_no = ?", btcOrder.OrderNo).Updates(&btcOrder).Error
+			if ethOrder.State != 3 && ethOrder.FeeType == 0 && (ethOrder.CreateTime+(10*60)) < time.Now().Unix() {
+				ethOrder.Timeout = 1
+				ethOrder.UpdateTime = time.Now().Unix()
+				err := global.Db.Model(&consumer.EthOrder{}).Where("order_no = ?", ethOrder.OrderNo).Updates(&ethOrder).Error
 				if err != nil {
 					fmt.Println("mysql更新失败")
 					return
 				}
 				redisVal := consumer.RedisOrder{
-					FeeType:      btcOrder.FeeType,
-					Fee:          btcOrder.Fee,
-					ExchangeRate: btcOrder.ExchangeRate,
-					OrderNo:      btcOrder.OrderNo,
+					FeeType:    ethOrder.FeeType,
+					Fee:        ethOrder.Fee,
+					AddrTo:     ethOrder.AddrTo,
+					Commission: ethOrder.Commission,
+					OrderNo:    ethOrder.OrderNo,
 					//--------------
-					CoinTo:       btcOrder.CoinTo,
-					BlockchainTo: btcOrder.BlockchainTo,
-					AgreementTo:  btcOrder.AgreementTo,
-					AmountTo:     btcOrder.AmountTo,
+					CoinTo:       ethOrder.CoinTo,
+					BlockchainTo: ethOrder.BlockchainTo,
+					AgreementTo:  ethOrder.AgreementTo,
+					AmountTo:     ethOrder.AmountTo,
 					//---------------
-					CoinFrom:       btcOrder.CoinFrom,
-					BlockchainFrom: btcOrder.BlockchainFrom,
-					AmountFrom:     btcOrder.AmountFrom,
-					AddrFrom:       btcOrder.AddrFrom,
+					CoinFrom:       ethOrder.CoinFrom,
+					BlockchainFrom: ethOrder.BlockchainFrom,
+					AmountFrom:     ethOrder.AmountFrom,
+					AddrFrom:       ethOrder.AddrFrom,
 					//订单状态
-					State:      btcOrder.State,
-					CreateTime: btcOrder.CreateTime,
-					Hash:       btcOrder.Hash,
+					State:      ethOrder.State,
+					CreateTime: ethOrder.CreateTime,
+					Hash:       ethOrder.Hash,
+					Timeout:    1,
 				}
 				jsonData, err := json.Marshal(redisVal)
 				if err != nil {
 					fmt.Println("转化json失败,jsonData", err)
 					return
 				}
-				err = global.Rdb0.HSet(global.ServerConfig.OrderState, btcOrder.OrderNo, jsonData).Err()
+				err = global.Rdb0.HSet(global.ServerConfig.OrderState, ethOrder.OrderNo, jsonData).Err()
 				if err != nil {
 					fmt.Println("redis0 trx 更新失败", err)
 					return
 				}
-				err = global.Rdb2.HDel(global.ServerConfig.WalletPools, btcOrder.Hash).Err()
-				if err != nil {
-					fmt.Println("redis3 trx 更新失败", err)
-					return
-				}
+				//err = global.Rdb2.HDel(global.ServerConfig.WalletPools, btcOrder.Hash).Err()
+				//if err != nil {
+				//	fmt.Println("redis3 trx 更新失败", err)
+				//	return
+				//}
 			}
 
-			if btcOrder.State == 7 || btcOrder.State == 8 {
-				err = global.Rdb2.HDel(global.ServerConfig.WalletPools, btcOrder.Hash).Err()
-				if err != nil {
-					fmt.Println("redis3 trx 更新失败", err)
-					return
-				}
-			}
+			//if btcOrder.State == 9 {
+			//	err = global.Rdb2.HDel(global.ServerConfig.WalletPools, btcOrder.Hash).Err()
+			//	if err != nil {
+			//		fmt.Println("redis3 trx 更新失败", err)
+			//		return
+			//	}
+			//}
 
 		}
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 3)
 	}
 }
