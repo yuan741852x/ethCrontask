@@ -16,7 +16,7 @@ func Init() {
 			return
 		}
 		for _, s2 := range result {
-			ethOrder := consumer.EthOrder{}
+			ethOrder := consumer.ETHOrder{}
 			err := json.Unmarshal([]byte(s2), &ethOrder)
 			if err != nil {
 				return
@@ -24,7 +24,7 @@ func Init() {
 			if ethOrder.State != 3 && ethOrder.FeeType == 0 && (ethOrder.CreateTime+(10*60)) < time.Now().Unix() {
 				ethOrder.Timeout = 1
 				ethOrder.UpdateTime = time.Now().Unix()
-				err := global.Db.Model(&consumer.EthOrder{}).Where("order_no = ?", ethOrder.OrderNo).Updates(&ethOrder).Error
+				err := global.Db.Model(&consumer.ETHOrder{}).Where("order_no = ?", ethOrder.OrderNo).Updates(&ethOrder).Error
 				if err != nil {
 					fmt.Println("mysql更新失败")
 					return
